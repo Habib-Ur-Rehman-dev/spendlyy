@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}Your profile — Spendly{% endblock %}
+
+{% block head %}
+<style>
+    .profile {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 4rem 2rem 5rem;
+    }
+    .profile-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    .profile-title {
+        font-family: var(--font-display);
+        font-size: clamp(1.75rem, 3vw, 2.5rem);
+        color: var(--ink);
+        margin-bottom: 0.35rem;
+    }
+    .profile-email { font-size: 0.95rem; color: var(--ink-muted); }
+    .profile-summary {
+        background: var(--paper-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 1.5rem 1.75rem;
+        margin-bottom: 2rem;
+    }
+    .profile-summary-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--ink-faint);
+    }
+    .profile-summary-total {
+        font-family: var(--font-display);
+        font-size: 2rem;
+        color: var(--ink);
+    }
+    .expense-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: var(--paper-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+    }
+    .expense-table th,
+    .expense-table td {
+        text-align: left;
+        padding: 0.85rem 1rem;
+        font-size: 0.9rem;
+        border-bottom: 1px solid var(--border-soft);
+    }
+    .expense-table th {
+        font-family: var(--font-body);
+        font-weight: 600;
+        color: var(--ink-muted);
+        background: var(--paper-warm);
+    }
+    .expense-table tr:last-child td { border-bottom: none; }
+    .expense-amount { text-align: right; font-variant-numeric: tabular-nums; color: var(--ink); }
+    .expense-cat {
+        display: inline-block;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--accent);
+        background: var(--accent-light);
+        padding: 0.15rem 0.6rem;
+        border-radius: 999px;
+    }
+    .profile-empty { color: var(--ink-muted); padding: 1.5rem 0; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<section class="profile">
+    <div class="profile-header">
+        <div>
+            <h1 class="profile-title">Hi, {{ user["name"] }}</h1>
+            <p class="profile-email">{{ user["email"] }}</p>
+        </div>
+        <a href="{{ url_for('logout') }}" class="btn-ghost">Log out</a>
+    </div>
+
+    <div class="profile-summary">
+        <div class="profile-summary-label">Total spent</div>
+        <div class="profile-summary-total">₹{{ '%.2f'|format(total) }}</div>
+    </div>
+
+    {% if expenses %}
+    <table class="expense-table">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Category</th>
+                <th>Description</th>
+                <th class="expense-amount">Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for e in expenses %}
+            <tr>
+                <td>{{ e["date"] }}</td>
+                <td><span class="expense-cat">{{ e["category"] }}</span></td>
+                <td>{{ e["description"] or "—" }}</td>
+                <td class="expense-amount">₹{{ '%.2f'|format(e["amount"]) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="profile-empty">No expenses yet.</p>
+    {% endif %}
+</section>
+
+{% endblock %}
