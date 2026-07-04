@@ -10,6 +10,7 @@ Run directly to create and seed the database on a fresh checkout:
 """
 
 import os
+import random
 import sqlite3
 
 from werkzeug.security import generate_password_hash
@@ -35,6 +36,25 @@ CATEGORIES = [
     "Shopping",
     "Other",
 ]
+
+# Extra demo users seeded with random expenses (all share DEMO_PASSWORD). Kept
+# separate from the primary Demo User, whose 8 expenses stay deterministic.
+DEMO_EXTRA_USERS = [
+    ("Alice Johnson", "alice@spendly.app"),
+    ("Bob Smith", "bob@spendly.app"),
+    ("Carol Lee", "carol@spendly.app"),
+]
+
+# Plausible descriptions per category for generated expenses.
+_SAMPLE_DESCRIPTIONS = {
+    "Food": ["Groceries", "Dinner out", "Coffee", "Lunch"],
+    "Transport": ["Fuel", "Taxi", "Bus pass", "Car service"],
+    "Bills": ["Electricity", "Internet", "Water bill", "Phone"],
+    "Health": ["Pharmacy", "Doctor visit", "Gym", "Supplements"],
+    "Entertainment": ["Movie night", "Concert", "Streaming", "Games"],
+    "Shopping": ["Clothes", "Shoes", "Electronics", "Books"],
+    "Other": ["Misc supplies", "Gift", "Donation", "Repairs"],
+}
 
 
 def get_db():
@@ -110,6 +130,30 @@ def seed_db():
         """,
         [(user_id, *row) for row in sample_expenses],
     )
+
+    # Additional demo users, each with 5–8 random expenses. A fixed seed keeps
+    # the generated data reproducible across fresh checkouts.
+    rng = random.Random(42)
+    for name, email in DEMO_EXTRA_USERS:
+        cursor = conn.execute(
+            "INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)",
+            (name, email, generate_password_hash(DEMO_PASSWORD)),
+        )
+        uid = cursor.lastrowid
+        rows = []
+        for _ in range(rng.randint(5, 8)):
+            category = rng.choice(CATEGORIES)
+            amount = round(rng.uniform(50, 5000), 2)  # REAL / float
+            description = rng.choice(_SAMPLE_DESCRIPTIONS[category])
+            date = f"2026-{rng.randint(1, 6):02d}-{rng.randint(1, 28):02d}"
+            rows.append((uid, amount, category, description, date))
+        conn.executemany(
+            """
+            INSERT INTO expenses (user_id, amount, category, description, date)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            rows,
+        )
 
     conn.commit()
     conn.close()
